@@ -7,7 +7,7 @@ const port = process.env.PORT || 5000;
 //midleware
 
 const corsOptions = {
-  origin: ['http://localhost:5173','https://assignment-12-4b1db.web.app', 'https://assignment-12-server-ruby.vercel.app'],
+  origin: ['http://localhost:5173', 'https://assignment-12-4b1db.web.app', 'https://assignment-12-server-ruby.vercel.app'],
   credentials: true,
   optionSuccessStatus: 200,
 }
@@ -44,6 +44,8 @@ async function run() {
       res.send(result)
     })
 
+
+
     //save a user data in DB 
     app.put('/user', async (req, res) => {
       const user = req.body
@@ -57,14 +59,14 @@ async function run() {
             {
               $set: { status: user?.status },
             })
-            return res.send(result)
+          return res.send(result)
 
         }
         else {
           return res.send(isExist)
         }
       }
-//save user for first time 
+      //save user for first time 
       const options = { upsert: true }
 
       const updateDoc = {
@@ -77,9 +79,30 @@ async function run() {
       res.send(result)
     })
 
+
+
+//get user info  by email   from db 
+app.get('/user/:email',async (req,res)=>{
+  const email=req.params.email
+  const result=await usersCollecction.findOne({email})
+  res.send (result)
+})
+
     //get all users from Db
     app.get('/users', async (req, res) => {
       const result = await usersCollecction.find().toArray()
+      res.send(result)
+    })
+
+    //update user role
+    app.patch('/users/update/:email', async(req,res)=>{
+      const  email=req.params.email
+      const user=req.body
+      const query={email}
+      const updateDoc={
+        $set:{...user,Timestamp:Date.now()},
+      }
+      const result=await usersCollecction.updateOne(query,updateDoc)
       res.send(result)
     })
 
