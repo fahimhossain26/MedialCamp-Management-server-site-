@@ -38,6 +38,38 @@ async function run() {
     const campCollection = client.db("MCMS").collection("camps");
     const usersCollecction = client.db("MCMS").collection("users");
 
+// // Verify Token Middleware
+// const verifyToken = async (req, res, next) => {
+//   const token = req.cookies?.token
+//   console.log(token)
+//   if (!token) {
+//     return res.status(401).send({ message: 'unauthorized access' })
+//   }
+//   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+//     if (err) {
+//       console.log(err)
+//       return res.status(401).send({ message: 'unauthorized access' })
+//     }
+//     req.user = decoded
+//     next()
+//   })
+// }
+// //------------------Verify Token Middleware close ---------
+
+
+
+    // //verify admin middleware 
+    // const verifyAdmin=async (req,res,next)=>{
+    //   const user=req.user
+    //   const query={email:user?.email}
+    //   const result=await usersCollecction.findOne(query)
+    //   if(!result || result?.role !=='admin') return res.status(401).send({message:'forbidden Access'})
+   
+    //     next()
+    //   }
+
+
+
     //get all camps
     app.get('/camps', async (req, res) => {
       const result = await campCollection.find().toArray()
