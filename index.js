@@ -2,7 +2,7 @@ const express = require('express')
 const app = express();
 const cors = require('cors')
 require('dotenv').config()
-const stripe=require("stripe")(process.env.STRIPE_SECRECT_KEY)
+const stripe = require("stripe")(process.env.STRIPE_SECRECT_KEY)
 const port = process.env.PORT || 5000;
 
 
@@ -39,25 +39,25 @@ async function run() {
 
     const campCollection = client.db("MCMS").collection("camps");
     const usersCollecction = client.db("MCMS").collection("users");
-    const bookingsCollection=client.db("MCMS").collection("bookings")
+    const bookingsCollection = client.db("MCMS").collection("bookings")
 
-// // Verify Token Middleware
-// const verifyToken = async (req, res, next) => {
-//   const token = req.cookies?.token
-//   console.log(token)
-//   if (!token) {
-//     return res.status(401).send({ message: 'unauthorized access' })
-//   }
-//   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-//     if (err) {
-//       console.log(err)
-//       return res.status(401).send({ message: 'unauthorized access' })
-//     }
-//     req.user = decoded
-//     next()
-//   })
-// }
-// //------------------Verify Token Middleware close ---------
+    // // Verify Token Middleware
+    // const verifyToken = async (req, res, next) => {
+    //   const token = req.cookies?.token
+    //   console.log(token)
+    //   if (!token) {
+    //     return res.status(401).send({ message: 'unauthorized access' })
+    //   }
+    //   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    //     if (err) {
+    //       console.log(err)
+    //       return res.status(401).send({ message: 'unauthorized access' })
+    //     }
+    //     req.user = decoded
+    //     next()
+    //   })
+    // }
+    // //------------------Verify Token Middleware close ---------
 
 
 
@@ -67,7 +67,7 @@ async function run() {
     //   const query={email:user?.email}
     //   const result=await usersCollecction.findOne(query)
     //   if(!result || result?.role !=='admin') return res.status(401).send({message:'forbidden Access'})
-   
+
     //     next()
     //   }
 
@@ -116,12 +116,12 @@ async function run() {
 
 
 
-//get user info  by email   from db 
-app.get('/user/:email',async (req,res)=>{
-  const email=req.params.email
-  const result=await usersCollecction.findOne({email})
-  res.send (result)
-})
+    //get user info  by email   from db 
+    app.get('/user/:email', async (req, res) => {
+      const email = req.params.email
+      const result = await usersCollecction.findOne({ email })
+      res.send(result)
+    })
 
     //get all users from Db
     app.get('/users', async (req, res) => {
@@ -130,14 +130,14 @@ app.get('/user/:email',async (req,res)=>{
     })
 
     //update user role
-    app.patch('/users/update/:email', async(req,res)=>{
-      const  email=req.params.email
-      const user=req.body
-      const query={email}
-      const updateDoc={
-        $set:{...user,Timestamp:Date.now()},
+    app.patch('/users/update/:email', async (req, res) => {
+      const email = req.params.email
+      const user = req.body
+      const query = { email }
+      const updateDoc = {
+        $set: { ...user, Timestamp: Date.now() },
       }
-      const result=await usersCollecction.updateOne(query,updateDoc)
+      const result = await usersCollecction.updateOne(query, updateDoc)
       res.send(result)
     })
 
@@ -148,23 +148,23 @@ app.get('/user/:email',async (req,res)=>{
       res.send(result)
     })
 
-//create-payment-intent
-app.post('/create-payment-intent', async(req,res)=>{
-  const price=req.body.price
-  const priceInCent= parseFloat(price)*100
-  if(!price || priceInCent<1) return
-  //generate Client Secret 
-  const {client_secret} =await stripe.paymentIntents.create({
-    amount: priceInCent,
-    currency: 'usd',
-   
-    automatic_payment_methods: {
-      enabled: true,
-    },
-  })
-  res.send({clientSecret: client_secret})
+    //create-payment-intent
+    app.post('/create-payment-intent', async (req, res) => {
+      const price = req.body.price
+      const priceInCent = parseFloat(price) * 100
+      if (!price || priceInCent < 1) return
+      //generate Client Secret 
+      const { client_secret } = await stripe.paymentIntents.create({
+        amount: priceInCent,
+        currency: 'usd',
 
-})
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      })
+      res.send({ clientSecret: client_secret })
+
+    })
 
 
 
@@ -196,72 +196,72 @@ app.post('/create-payment-intent', async(req,res)=>{
     })
 
 
-      //save a booking Data in Db 
-      app.post('/booking', async (req, res) => {
-        const bookingData = req.body
-        // savecamp booking Info
-        const result = await bookingsCollection.insertOne(bookingData)
-        // //change Camp availablity status
-        // const campId=bookingData?.campId
-        // const query={_id:new ObjectId(campId)}
-        // const updateDoc={
-        //   $set:{booked:true},
-        // }
-        // const updatedCamp=await campCollection.updateOne(query,updateDoc)
-        // console.log(updatedCamp);
+    //save a booking Data in Db 
+    app.post('/booking', async (req, res) => {
+      const bookingData = req.body
+      // savecamp booking Info
+      const result = await bookingsCollection.insertOne(bookingData)
+      // //change Camp availablity status
+      // const campId=bookingData?.campId
+      // const query={_id:new ObjectId(campId)}
+      // const updateDoc={
+      //   $set:{booked:true},
+      // }
+      // const updatedCamp=await campCollection.updateOne(query,updateDoc)
+      // console.log(updatedCamp);
 
       res.send(result)
-      })
+    })
 
 
-//update camp data 
-app.put('/camp/update/:id',async(req,res)=>{
-  const id=req.params.id
-  const campData=req.body
-  const query={_id: new ObjectId(id)}
-  const updateDoc={
-    $set: campData
-  }
-  const result=await campCollection.updateOne(query,updateDoc)
-  res.send (result)
-})
-
-
-
-
-      //update Camp status
-      app.patch('/camp/status/:id',async(req,res)=>{
-        const id =req.params.id
-        const status=req.body.status
-        //change Camp availablity status
-        const query={_id:new ObjectId(id)}
-        const updateDoc={
-          $set:{booked: status},
-        }
-        const result= await campCollection.updateOne(query,updateDoc)
+    //update camp data 
+    app.put('/camp/update/:id', async (req, res) => {
+      const id = req.params.id
+      const campData = req.body
+      const query = { _id: new ObjectId(id) }
+      const updateDoc = {
+        $set: campData
+      }
+      const result = await campCollection.updateOne(query, updateDoc)
       res.send(result)
-      })
-
-      //get all bookings for a guest 
-      app.get('/my-bookings/:email',async (req,res)=>{
-        const email=req.params.email
-        const query={'participant.email': email}
-        const result= await bookingsCollection.find(query).toArray()
-        res.send(result)
-      })
-
-      //delete a booking 
-      app.delete('/booking/:id', async (req, res) => {
-        const id = req.params.id
-        const query = { _id: new ObjectId(id) }
-        const result = await bookingsCollection.deleteOne(query)
-        res.send(result)
-      })
+    })
 
 
 
-        // Host Statistics
-    app.get('/host-stat',  async (req, res) => {
+
+    //update Camp status
+    app.patch('/camp/status/:id', async (req, res) => {
+      const id = req.params.id
+      const status = req.body.status
+      //change Camp availablity status
+      const query = { _id: new ObjectId(id) }
+      const updateDoc = {
+        $set: { booked: status },
+      }
+      const result = await campCollection.updateOne(query, updateDoc)
+      res.send(result)
+    })
+
+    //get all bookings for a guest 
+    app.get('/my-bookings/:email', async (req, res) => {
+      const email = req.params.email
+      const query = { 'participant.email': email }
+      const result = await bookingsCollection.find(query).toArray()
+      res.send(result)
+    })
+
+    //delete a booking 
+    app.delete('/booking/:id', async (req, res) => {
+      const id = req.params.id
+      const query = { _id: new ObjectId(id) }
+      const result = await bookingsCollection.deleteOne(query)
+      res.send(result)
+    })
+
+
+
+    // Host Statistics
+    app.get('/host-stat', async (req, res) => {
       const { email } = req.user
       const bookingDetails = await bookingsCollection
         .find(
@@ -294,7 +294,7 @@ app.put('/camp/update/:id',async(req,res)=>{
         return data
       })
       chartData.unshift(['Day', 'Sales'])
-      
+
 
       console.log(chartData)
 
@@ -311,7 +311,7 @@ app.put('/camp/update/:id',async(req,res)=>{
 
 
 
-    // Send a ping to confirm a successful connection
+    
     // await client.db("admin").command({ ping: 1 });
     // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
