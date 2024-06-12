@@ -294,7 +294,7 @@ app.put('/camp/update/:id',async(req,res)=>{
         return data
       })
       chartData.unshift(['Day', 'Sales'])
-      // chartData.splice(0, 0,
+      
 
       console.log(chartData)
 
