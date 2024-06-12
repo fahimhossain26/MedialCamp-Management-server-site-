@@ -39,6 +39,7 @@ async function run() {
 
     const campCollection = client.db("MCMS").collection("camps");
     const usersCollecction = client.db("MCMS").collection("users");
+    const bookingsCollection=client.db("MCMS").collection("bookings")
 
 // // Verify Token Middleware
 // const verifyToken = async (req, res, next) => {
@@ -143,7 +144,7 @@ app.get('/user/:email',async (req,res)=>{
     //save a camp Data in Db 
     app.post('/camp', async (req, res) => {
       const campData = req.body
-      const result = campCollection.insertOne(campData)
+      const result = await campCollection.insertOne(campData)
       res.send(result)
     })
 
@@ -193,6 +194,121 @@ app.post('/create-payment-intent', async(req,res)=>{
       const result = await campCollection.findOne(query)
       res.send(result)
     })
+
+
+      //save a booking Data in Db 
+      app.post('/booking', async (req, res) => {
+        const bookingData = req.body
+        // savecamp booking Info
+        const result = await bookingsCollection.insertOne(bookingData)
+        // //change Camp availablity status
+        // const campId=bookingData?.campId
+        // const query={_id:new ObjectId(campId)}
+        // const updateDoc={
+        //   $set:{booked:true},
+        // }
+        // const updatedCamp=await campCollection.updateOne(query,updateDoc)
+        // console.log(updatedCamp);
+
+      res.send(result)
+      })
+
+
+//update camp data 
+app.put('/camp/update/:id',async(req,res)=>{
+  const id=req.params.id
+  const campData=req.body
+  const query={_id: new ObjectId(id)}
+  const updateDoc={
+    $set: campData
+  }
+  const result=await campCollection.updateOne(query,updateDoc)
+  res.send (result)
+})
+
+
+
+
+      //update Camp status
+      app.patch('/camp/status/:id',async(req,res)=>{
+        const id =req.params.id
+        const status=req.body.status
+        //change Camp availablity status
+        const query={_id:new ObjectId(id)}
+        const updateDoc={
+          $set:{booked: status},
+        }
+        const result= await campCollection.updateOne(query,updateDoc)
+      res.send(result)
+      })
+
+      //get all bookings for a guest 
+      app.get('/my-bookings/:email',async (req,res)=>{
+        const email=req.params.email
+        const query={'participant.email': email}
+        const result= await bookingsCollection.find(query).toArray()
+        res.send(result)
+      })
+
+      //delete a booking 
+      app.delete('/booking/:id', async (req, res) => {
+        const id = req.params.id
+        const query = { _id: new ObjectId(id) }
+        const result = await bookingsCollection.deleteOne(query)
+        res.send(result)
+      })
+
+
+
+        // Host Statistics
+    app.get('/host-stat',  async (req, res) => {
+      const { email } = req.user
+      const bookingDetails = await bookingsCollection
+        .find(
+          { 'organizer.email': email },
+          {
+            projection: {
+              date: 1,
+              price: 1,
+            },
+          }
+        )
+        .toArray()
+
+      const totalCamps = await campCollection.countDocuments({
+        'organizer.email': email,
+      })
+      const totalPrice = bookingDetails.reduce(
+        (sum, booking) => sum + booking.price,
+        0
+      )
+      const { timestamp } = await usersCollection.findOne(
+        { email },
+        { projection: { timestamp: 1 } }
+      )
+
+      const chartData = bookingDetails.map(booking => {
+        const day = new Date(booking.date).getDate()
+        const month = new Date(booking.date).getMonth() + 1
+        const data = [`${day}/${month}`, booking?.price]
+        return data
+      })
+      chartData.unshift(['Day', 'Sales'])
+      // chartData.splice(0, 0, ['Day', 'Sales'])
+
+      console.log(chartData)
+
+      console.log(bookingDetails)
+      res.send({
+        totalCamps,
+        totalBookings: bookingDetails.length,
+        totalPrice,
+        chartData,
+        hostSince: timestamp,
+      })
+    })
+
+
 
 
     // Send a ping to confirm a successful connection
